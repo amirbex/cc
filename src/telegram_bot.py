@@ -19,15 +19,7 @@ load_dotenv()
 
 import os
 
-token = os.getenv("7843819663:AAED6HyqaLKdANVHq3kvqvYua9koAJp14Ts")
-print("TOKEN VALUE:", token)  # ← این خط کمک می‌کنه ببینی واقعاً چی داره خونده می‌شه
-
-# test fallback
-# token = "123456789:ABCDefghIjklmnopQRSTuvwxYz"  ← برای تست دستی فقط
-
-if not token:
-    raise Exception("Token is empty! Check TELEGRAM_TOKEN env variable.")
-
+token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send welcome message and main menu."""
