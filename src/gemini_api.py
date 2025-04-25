@@ -24,11 +24,35 @@ def analyze_with_gemini(data, category):
     """
     
     try:
-        # ارسال درخواست به مدل و دریافت پاسخ
+        # شروع مکالمه با مدل Gemini
         chat = model.start_chat()
+        
+        # ارسال پیام به مدل برای دریافت تحلیل
         response = chat.send_message(prompt)
         
-        # بازگشت متن پاسخ
+        # بازگشت متن پاسخ از مدل
+        return response.text
+    
+    except Exception as e:
+        # مدیریت خطاهای احتمالی
+        return f"خطا در اتصال به API جمینای: {str(e)}"
+
+def chat_with_gemini(message: str) -> str:
+    """Send a message to Gemini and get the response."""
+    # تنظیم API key از محیط
+    genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+    
+    # مدل پیشرفته‌ی Gemini
+    model = genai.GenerativeModel('gemini-1.5-pro')
+
+    try:
+        # شروع مکالمه با مدل Gemini
+        chat = model.start_chat()
+        
+        # ارسال پیام به مدل برای دریافت پاسخ
+        response = chat.send_message(message)
+        
+        # بازگشت متن پاسخ از مدل
         return response.text
     
     except Exception as e:
