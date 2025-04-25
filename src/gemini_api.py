@@ -6,9 +6,13 @@ load_dotenv()
 
 def analyze_with_gemini(data, category):
     """Send data to Gemini API for analysis."""
+    # تنظیم API key از محیط
     genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+    
+    # مدل پیشرفته‌ی Gemini
     model = genai.GenerativeModel('gemini-1.5-pro')
 
+    # ایجاد prompt برای تحلیل داده‌ها
     prompt = f"""
     داده‌های زیر مربوط به یک کافه در دسته‌بندی '{category}' است:
     {data}
@@ -18,8 +22,15 @@ def analyze_with_gemini(data, category):
     - هر گونه ناهنجاری (مثلاً هزینه‌های غیرعادی)
     پاسخ ساختارمند و کاربرپسند باشد.
     """
+    
     try:
-        response = model.generate_content(prompt)
+        # ارسال درخواست به مدل و دریافت پاسخ
+        chat = model.start_chat()
+        response = chat.send_message(prompt)
+        
+        # بازگشت متن پاسخ
         return response.text
+    
     except Exception as e:
+        # مدیریت خطاهای احتمالی
         return f"خطا در اتصال به API جمینای: {str(e)}"
