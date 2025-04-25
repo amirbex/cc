@@ -10,8 +10,8 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 from data_processing import load_excel_data, validate_excel_structure
-from src.gemini_api import analyze_with_gemini
-from src.visualization import plot_sales
+from gemini_api import analyze_with_gemini
+from visualization import plot_sales
 
 load_dotenv()
 
