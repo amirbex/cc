@@ -13,7 +13,6 @@ load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 # Fixed menu
-
 def get_fixed_menu():
     return [
         [InlineKeyboardButton("شروع مجدد", callback_data='restart')],
@@ -80,12 +79,14 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download_to_drive(path)
 
     try:
-        data = load_excel_data(path)
+        data = load_excel_data(path)  # داده‌های فایل اکسل
+        context.user_data['data'] = data  # ذخیره داده‌ها در context
         if category != 'generic':
             validate_excel_structure(data, category)
+        
         result = analyze_with_gemini(data, category)
-
         await thinking_msg.delete()
+
         for part in result.split("\n\n"):
             await update.message.reply_text(part)
 
@@ -114,12 +115,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.message.reply_text("یکی از روش‌های ورود اطلاعات را انتخاب کن:", reply_markup=InlineKeyboardMarkup(kb))
 
+    elif query.data == 'manual_input':
+        await handle_manual_input(update, context)
+
     elif query.data == 'upload_excel':
         context.user_data['category'] = 'generic'
         await query.message.reply_text("فایل خود را ارسال کنید (فرمت: .xlsx)")
-
-    elif query.data == 'manual_input':
-        await handle_manual_input(update, context)
 
     elif query.data == 'analyze_data':
         kb = [
@@ -140,7 +141,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("مکالمه پایان یافت. هر وقت خواستی دوباره صدام کن! 😊")
 
 # Main entry
-
 def main():
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler('start', start))
