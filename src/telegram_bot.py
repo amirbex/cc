@@ -9,7 +9,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from dotenv import load_dotenv
-from src.data_processing import load_excel_data, validate_excel_structure
+from data_processing import load_excel_data, validate_excel_structure
 from src.gemini_api import analyze_with_gemini
 from src.visualization import plot_sales
 
