@@ -16,6 +16,14 @@ from visualization import plot_sales
 load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 
+# Function to create a fixed menu
+def get_fixed_menu():
+    return [
+        [InlineKeyboardButton("شروع مجدد", callback_data='restart')],
+        [InlineKeyboardButton("منو اصلی", callback_data='main_menu')],
+        [InlineKeyboardButton("پایان مکالمه", callback_data='end_conversation')],
+    ]
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     welcome_parts = [
@@ -32,6 +40,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📊 تحلیل اطلاعات", callback_data='analyze_data')],
         [InlineKeyboardButton("📜 بازبینی اطلاعات گذشته", callback_data='review_data')],
     ]
+    # Add the fixed menu
+    keyboard.extend(get_fixed_menu())
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("منوی اصلی 👇", reply_markup=reply_markup)
 
@@ -81,6 +92,17 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         category = category_map[query.data]
         context.user_data['category'] = category
         await query.message.reply_text(f"لطفاً فایل اکسل برای '{category}' رو آپلود کن.")
+
+    elif query.data == 'restart':
+        await start(update, context)  # Restart the bot conversation
+    
+    elif query.data == 'main_menu':
+        # Send back to the main menu
+        await query.message.reply_text("این هم منو اصلی. لطفاً یکی از گزینه‌ها رو انتخاب کن:")
+        await start(update, context)  # Send the main menu again
+    
+    elif query.data == 'end_conversation':
+        await query.message.reply_text("پایان مکالمه. اگر دوباره نیاز به کمک داشتی، من اینجام! 😊")
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     document = update.message.document
