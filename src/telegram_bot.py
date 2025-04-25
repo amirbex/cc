@@ -10,38 +10,32 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 from data_processing import load_excel_data, validate_excel_structure
-from gemini_api import analyze_with_gemini
+from gemini_api import analyze_with_gemini, chat_with_gemini
 from visualization import plot_sales
 
-import os
-
 load_dotenv()
-
-import os
-
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Send welcome message and main menu."""
     user = update.effective_user
-    welcome_message = (
-        f"سلام {user.first_name}! 😊 من **CaReMa**، دستیار هوشمند مدیریت کافه و رستوران، نسخه حسابداری‌ام!\n"
-        "اسمم مخفف Cafe Restaurant Managerه، و این نسخه‌ام مخصوص تحلیل داده‌های مالی کافه‌ته. 💼\n"
-        "می‌تونم فاکتورهای خرید، فروش، هدررفت، و هزینه‌ها رو برات تحلیل کنم و نمودارهای قشنگ نشونت بدم.\n"
-        "آماده‌ای کافه‌ت رو به سطح بعدی ببری؟ 🚀 از منوی زیر شروع کن!"
-    )
-    
+    welcome_parts = [
+        f"سلام {user.first_name}! 👋",
+        "من **CaReMa** هستم. دستیار هوشمند مالی کافه و رستوران. 💼",
+        "میتونم باهات گپ بزنم، فایلاتو تحلیل کنم و مشاوره بدم!",
+        "از منوی زیر شروع کن یا هر سوالی داری همینجا بپرس. 😊"
+    ]
+    for part in welcome_parts:
+        await update.message.reply_text(part)
+
     keyboard = [
         [InlineKeyboardButton("📤 بارگذاری اطلاعات", callback_data='upload_data')],
         [InlineKeyboardButton("📊 تحلیل اطلاعات", callback_data='analyze_data')],
         [InlineKeyboardButton("📜 بازبینی اطلاعات گذشته", callback_data='review_data')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text("منوی اصلی 👇", reply_markup=reply_markup)
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle button clicks."""
     query = update.callback_query
     await query.answer()
 
@@ -55,7 +49,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("لطفاً دسته‌بندی فایل اکسل رو انتخاب کن:", reply_markup=reply_markup)
-    
+
     elif query.data == 'analyze_data':
         keyboard = [
             [InlineKeyboardButton("سود و زیان", callback_data='analyze_profit')],
@@ -65,7 +59,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("لطفاً نوع تحلیل رو انتخاب کن:", reply_markup=reply_markup)
-    
+
     elif query.data == 'review_data':
         keyboard = [
             [InlineKeyboardButton("فروش کلی آیتم‌ها", callback_data='review_total_sales')],
@@ -75,7 +69,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("لطفاً نوع داده‌های گذشته رو انتخاب کن:", reply_markup=reply_markup)
-    
+
     elif query.data.startswith('upload_'):
         category_map = {
             'upload_usage': 'دستورالعمل‌های مصرف مواد',
@@ -89,7 +83,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(f"لطفاً فایل اکسل برای '{category}' رو آپلود کن.")
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle uploaded Excel files."""
     document = update.message.document
     if not document.file_name.endswith('.xlsx'):
         await update.message.reply_text("لطفاً فقط فایل اکسل (.xlsx) آپلود کنید!")
@@ -100,16 +93,13 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("لطفاً اول دسته‌بندی رو از منو انتخاب کن!")
         return
 
-    # Send thinking message
     thinking_message = await update.message.reply_text("در حال فکر کردن هستم... 🧠")
 
-    # Download file
     file = await document.get_file()
     file_path = f'temp_data/{document.file_name}'
     os.makedirs('temp_data', exist_ok=True)
     await file.download_to_drive(file_path)
 
-    # Process data
     try:
         data = load_excel_data(file_path)
         validate_excel_structure(data, category)
@@ -119,43 +109,45 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.remove(file_path)
         return
 
-    # Analyze with Gemini
     analysis_result = analyze_with_gemini(data, category)
 
-    # Generate visualization (only for sales in this version)
     visualizations = []
     if category == 'فروش':
         viz_path = f'results/visualizations/{document.file_name}_sales.png'
         visualizations.append(plot_sales(data, viz_path))
 
-    # Save analysis
     os.makedirs('results/analysis_reports', exist_ok=True)
     analysis_path = f'results/analysis_reports/{category}_{document.file_name}.txt'
     with open(analysis_path, 'w', encoding='utf-8') as f:
         f.write(analysis_result)
 
-    # Delete thinking message
     await thinking_message.delete()
 
-    # Send results
     await update.message.reply_text(analysis_result)
     for viz_path in visualizations:
         with open(viz_path, 'rb') as viz_file:
             await update.message.reply_photo(viz_file, caption=f"نمودار {category} - {document.file_name}")
         os.remove(viz_path)
 
-    # Cleanup
     os.remove(file_path)
     await update.message.reply_text("می‌خوای تحلیل دیگه‌ای انجام بدم یا فایل جدید آپلود کنی؟ 😄")
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
+    response = chat_with_gemini(user_message)
+    await update.message.reply_text(response)
+
+    os.makedirs('results/conversations', exist_ok=True)
+    with open('results/conversations/log.txt', 'a', encoding='utf-8') as f:
+        f.write(f"User: {user_message}\nBot: {response}\n\n")
+
 def main():
-    """Run the Telegram bot."""
-    token = os.getenv('TELEGRAM_BOT_TOKEN')
     app = Application.builder().token(token).build()
 
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     app.run_polling()
 
