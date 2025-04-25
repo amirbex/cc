@@ -13,6 +13,10 @@ from data_processing import load_excel_data, validate_excel_structure
 from gemini_api import analyze_with_gemini
 from visualization import plot_sales
 
+import os
+
+token = os.getenv("7843819663:AAED6HyqaLKdANVHq3kvqvYua9koAJp14Ts")
+
 load_dotenv()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
