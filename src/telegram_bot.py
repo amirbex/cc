@@ -31,8 +31,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "میتونم باهات گپ بزنم، فایلاتو تحلیل کنم و مشاوره بدم!",
         "از منوی زیر شروع کن یا هر سوالی داری همینجا بپرس. 😊"
     ]
+    
+    # استفاده از update.effective_message برای ارسال پیام
     for part in welcome_parts:
-        await update.message.reply_text(part)
+        if update.effective_message:
+            await update.effective_message.reply_text(part)
 
     # منوی اصلی
     keyboard = [
@@ -43,7 +46,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard.extend(get_fixed_menu())  # افزودن منوی ثابت به کیبورد
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("منوی اصلی 👇", reply_markup=reply_markup)
+    if update.effective_message:
+        await update.effective_message.reply_text("منوی اصلی 👇", reply_markup=reply_markup)
+
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
