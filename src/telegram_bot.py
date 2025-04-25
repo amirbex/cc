@@ -13,6 +13,7 @@ load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 # Fixed menu
+
 def get_fixed_menu():
     return [
         [InlineKeyboardButton("شروع مجدد", callback_data='restart')],
@@ -79,14 +80,12 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download_to_drive(path)
 
     try:
-        data = load_excel_data(path)  # داده‌های فایل اکسل
-        context.user_data['data'] = data  # ذخیره داده‌ها در context
+        data = load_excel_data(path)
         if category != 'generic':
             validate_excel_structure(data, category)
-        
         result = analyze_with_gemini(data, category)
-        await thinking_msg.delete()
 
+        await thinking_msg.delete()
         for part in result.split("\n\n"):
             await update.message.reply_text(part)
 
@@ -131,6 +130,38 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.message.reply_text("لطفاً نوع تحلیل را انتخاب کن:", reply_markup=InlineKeyboardMarkup(kb))
 
+    elif query.data == 'analyze_profit':
+        data = context.user_data.get('data')
+        if data is not None:
+            result = analyze_with_gemini(data, 'profit')
+            await query.message.reply_text(result)
+        else:
+            await query.message.reply_text("اطلاعاتی برای تحلیل پیدا نشد.")
+
+    elif query.data == 'analyze_sales':
+        data = context.user_data.get('data')
+        if data is not None:
+            result = analyze_with_gemini(data, 'sales')
+            await query.message.reply_text(result)
+        else:
+            await query.message.reply_text("اطلاعاتی برای تحلیل پیدا نشد.")
+            
+    elif query.data == 'analyze_usage':
+        data = context.user_data.get('data')
+        if data is not None:
+            result = analyze_with_gemini(data, 'usage')
+            await query.message.reply_text(result)
+        else:
+            await query.message.reply_text("اطلاعاتی برای تحلیل پیدا نشد.")
+            
+    elif query.data == 'analyze_pricing':
+        data = context.user_data.get('data')
+        if data is not None:
+            result = analyze_with_gemini(data, 'pricing')
+            await query.message.reply_text(result)
+        else:
+            await query.message.reply_text("اطلاعاتی برای تحلیل پیدا نشد.")
+    
     elif query.data == 'restart':
         await start(update, context)
 
@@ -141,6 +172,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("مکالمه پایان یافت. هر وقت خواستی دوباره صدام کن! 😊")
 
 # Main entry
+
 def main():
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler('start', start))
