@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 
 def load_excel_data(file_path):
     """Read an Excel file and convert to a list of dictionaries."""
@@ -18,6 +17,7 @@ def validate_excel_structure(data, category):
         'هدررفت': ['Date', 'Item', 'Quantity Wasted', 'Estimated Cost'],
         'هزینه‌ها': ['Date', 'Category', 'Amount', 'Description']
     }
+
     if category not in required_columns:
         raise ValueError(f"دسته‌بندی نامعتبر: {category}")
     
@@ -27,3 +27,19 @@ def validate_excel_structure(data, category):
         raise ValueError(f"ستون‌های موردنیاز برای {category} یافت نشد: {missing_columns}")
     
     return True
+
+def parse_manual_data(text):
+    """
+    Parse user inputted text into structured data.
+    Each line should be like 'کلید: مقدار'
+    """
+    try:
+        lines = text.strip().split('\n')
+        data = {}
+        for line in lines:
+            if ':' in line:
+                key, value = line.split(':', 1)
+                data[key.strip()] = value.strip()
+        return [data]  # بازگشت به صورت لیست از دیکشنری‌ها
+    except Exception as e:
+        raise ValueError(f"خطا در پردازش ورودی دستی: {str(e)}")
